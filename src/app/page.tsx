@@ -1,14 +1,9 @@
 // src/app/page.tsx
+import { StopsGrid } from '@/components/StopsGrid';
+import { getStops } from '@/lib/data';
 
-import { BusStopsGrid } from '@/components/BusStopsGrid/BusStopsGrid';
-import { getBusStops } from '@/services/busService';
-
-export default async function Home() {
-  const stops = await getBusStops();
+export default async function HomePage() {
+  const stops = await getStops();
   
-  return (
-    <main>
-      <BusStopsGrid stops={stops} />
-    </main>
-  );
+  return <StopsGrid stops={stops} />;
 }

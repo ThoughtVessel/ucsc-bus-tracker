@@ -1,7 +1,6 @@
 // src/app/stops/[id]/page.tsx
-
-import { RouteBox } from '@/components/BusStopsGrid/RouteBox';
-import { getStopRoutes } from '@/services/busService';
+import { RouteBox } from '@/components/RouteBox';
+import { getStopRoutes } from '@/lib/data';
 import Link from 'next/link';
 
 interface StopPageProps {
@@ -25,7 +24,7 @@ export default async function StopPage({ params }: StopPageProps) {
       </div>
       <div className="flex flex-col w-full">
         {routes.map((route) => (
-          <RouteBox key={route.id} route={route} />
+          <RouteBox key={route.id} {...route} />
         ))}
       </div>
     </div>
