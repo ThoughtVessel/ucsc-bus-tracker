@@ -1,23 +1,28 @@
 // src/app/layout.tsx
 
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 
 const inter = Inter({
   subsets: ['latin'],
-  display: 'swap',  // Better font loading performance
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
   title: 'Transit App',
   description: 'Real-time bus and transit information',
-  viewport: 'width=device-width, initial-scale=1',
+};
+
+// Separate viewport export as per Next.js 14 requirements
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
 };
 
 interface RootLayoutProps {
   children: React.ReactNode;
-  modal: React.ReactNode;  // For route modal overlays if needed
+  modal: React.ReactNode;
 }
 
 export default function RootLayout({ children, modal }: RootLayoutProps) {
@@ -31,7 +36,6 @@ export default function RootLayout({ children, modal }: RootLayoutProps) {
   );
 }
 
-// Handle root errors
 export function Error({
   error,
   reset,
