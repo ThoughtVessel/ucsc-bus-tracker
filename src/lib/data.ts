@@ -16,9 +16,22 @@ interface Stop {
 export async function getStops(): Promise<Stop[]> {
   // Replace with your actual API call
   return [
-    { id: '1', name: 'Luzern' },
-    { id: '2', name: 'Lausanne' },
-    // Add more stops...
+    //UCSC stops
+    { id: '1', name: 'Science Hill' },
+    { id: '2', name: 'College 9 & 10' },
+    { id: '3', name: 'Kresge' },
+    { id: '4', name: 'Crown / Merril Colleges' },
+    { id: '5', name: 'Kerr Hall' },
+    { id: '6', name: 'Cowell / Stevenson Colleges' },
+    { id: '7', name: 'Rachel Carson / Porter Colleges' },
+    { id: '8', name: 'East Field House' },
+    { id: '9', name: 'Family Student Housing' },
+    { id: '10', name: 'East Remote Parking' },
+    { id: '11', name: 'Oakes College' },
+    { id: '12', name: 'The Farm' },
+    { id: '13', name: '' },
+    { id: '14', name: 'Coolidge Dr & Hagar Ct' },
+    { id: '16', name: 'Main Entrance' },
   ];
 }
 

@@ -19,7 +19,7 @@ export default async function StopPage({ params }: StopPageProps) {
           href="/"
           className="px-6 py-3 text-gray-800 text-lg absolute top-2 left-2"
         >
-          ← Back
+          ← All Stops
         </Link>
       </div>
       <div className="flex flex-col w-full">
