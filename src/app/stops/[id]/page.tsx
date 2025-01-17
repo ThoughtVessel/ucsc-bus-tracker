@@ -9,13 +9,37 @@ interface StopPageProps {
   }>;
 }
 
+// Add interface for grouped route
+interface GroupedRoute {
+  id: string;
+  description: string;
+  location: string;
+  times: number[];
+  color: string;
+}
+
 export default async function StopPage({ params }: StopPageProps) {
-  // Await the params before accessing id
   const { id } = await params;
   const stopId = String(id);
-  
+
   try {
     const routes = await getStopRoutes(stopId);
+
+    // Group routes by ID with proper typing
+    const groupedRoutes = routes.reduce<Record<string, GroupedRoute>>((acc, route) => {
+      const key = route.id;
+      if (!acc[key]) {
+        acc[key] = {
+          ...route,
+          times: [route.time]
+        };
+      } else {
+        acc[key].times.push(route.time);
+        // Sort times in ascending order
+        acc[key].times.sort((a: number, b: number) => a - b);
+      }
+      return acc;
+    }, {});
 
     return (
       <div className="w-full h-screen bg-gray-100">
@@ -28,8 +52,12 @@ export default async function StopPage({ params }: StopPageProps) {
           </Link>
         </div>
         <div className="flex flex-col w-full">
-          {routes.map((route) => (
-            <RouteBox key={route.id} {...route} />
+          {Object.values(groupedRoutes).map((route) => (
+            <RouteBox 
+              key={route.id} 
+              {...route} 
+              times={route.times}
+            />
           ))}
         </div>
       </div>
@@ -42,7 +70,8 @@ export default async function StopPage({ params }: StopPageProps) {
           <Link 
             href="/"
             className="mt-4 inline-block rounded-md bg-blue-500 px-4 py-2 text-white"
-          > Back to Stops
+          >
+            Back to Stops
           </Link>
         </div>
       </div>

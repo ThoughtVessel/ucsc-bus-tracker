@@ -1,9 +1,17 @@
 // src/lib/busConfig.ts
 
+interface BusApiConfig {
+  apiUrl: string;
+  apiKey: string;
+  format: string;
+}
+
 export const BUS_API_CONFIG = {
-  apiUrl: "YOUR_API_URL",
+  apiUrl: "http://rt.scmetro.org/bustime/api/v3",
   apiKey: "myjzDyRfTEFfXqidcMfBBjxRc",
-  rtpidatafeed: "YOUR_FEED_NAME" // Optional
+  //rtpidatafeed: "YOUR_FEED_NAME", // Optional
+  // Force JSON response format
+  format: "json"
 };
 
 // Individual stop mappings

@@ -73,31 +73,38 @@ export async function getStops(): Promise<Stop[]> {
 
 export async function getStopRoutes(stopId: string): Promise<Route[]> {
   try {
+    console.log('Fetching routes for stop:', stopId);
+    
     // Check if this is a grouped stop
     const groupedStop = Object.values(STOP_GROUPINGS).find(group => group.id === stopId);
     
     if (groupedStop) {
+      console.log('Found grouped stop:', groupedStop);
+      
       // Fetch predictions for all stops in the group
       const predictionsPromises = groupedStop.stops.map(async stop => {
         try {
-          const response = await fetch(
-            `${BUS_API_CONFIG.apiUrl}/getpredictions?key=${BUS_API_CONFIG.apiKey}&stpid=${stop.busstopId}${
-              BUS_API_CONFIG.rtpidatafeed ? `&rtpidatafeed=${BUS_API_CONFIG.rtpidatafeed}` : ''
-            }`
-          );
+          const url = `${BUS_API_CONFIG.apiUrl}/getpredictions?key=${BUS_API_CONFIG.apiKey}
+          &format=${BUS_API_CONFIG.format}&stpid=${stop.busstopId}`;
+          
+          console.log('Fetching predictions from URL:', url);
+          
+          const response = await fetch(url);
           
           if (!response.ok) {
+            console.error('Response not OK:', response.status, response.statusText);
             throw new Error(`HTTP error! status: ${response.status}`);
           }
           
           const data = await response.json();
+          console.log('Raw API response for stop', stop.busstopId, ':', data);
           
           if (data.error) {
             console.error(`Error fetching predictions for stop ${stop.name}:`, data.error);
             return [];
           }
 
-          return (data['bustime-response'].prd || []).map((pred: BusTimePrediction): CombinedPrediction => ({
+          const predictions = (data['bustime-response'].prd || []).map((pred: BusTimePrediction): CombinedPrediction => ({
             id: pred.rt,
             description: formatPredictionDescription(pred),
             location: pred.stpnm,
@@ -106,6 +113,10 @@ export async function getStopRoutes(stopId: string): Promise<Route[]> {
             stopName: stop.name,
             direction: pred.des
           }));
+          
+          console.log('Processed predictions for stop', stop.busstopId, ':', predictions);
+          return predictions;
+
         } catch (error) {
           console.error(`Error fetching predictions for stop ${stop.busstopId}:`, error);
           return [];
@@ -114,6 +125,7 @@ export async function getStopRoutes(stopId: string): Promise<Route[]> {
 
       const predictions = await Promise.all(predictionsPromises);
       const allPredictions = predictions.flat().sort((a, b) => a.time - b.time);
+      console.log('All predictions after combining:', allPredictions);
 
       // Combine and deduplicate predictions
       const combinedPredictions: Route[] = [];
@@ -131,14 +143,11 @@ export async function getStopRoutes(stopId: string): Promise<Route[]> {
         );
 
         if (existingPred) {
-          // Update existing prediction with the earlier time
           existingPred.time = Math.min(existingPred.time, pred.time);
-          // Only add stop name if it's different
           if (!existingPred.location.includes(pred.stopName)) {
             existingPred.location = `${existingPred.location} & ${pred.stopName}`;
           }
         } else {
-          // Add new prediction
           combinedPredictions.push({
             id: pred.id,
             description: pred.description,
@@ -151,6 +160,7 @@ export async function getStopRoutes(stopId: string): Promise<Route[]> {
         processedPredictions.add(predictionKey);
       });
 
+      console.log('Final combined predictions:', combinedPredictions);
       return combinedPredictions;
 
     } else {
@@ -158,34 +168,45 @@ export async function getStopRoutes(stopId: string): Promise<Route[]> {
       const singleStop = SINGLE_STOPS.find(stop => stop.id === stopId);
       
       if (!singleStop) {
+        console.error(`No stop found for ID ${stopId}`);
         throw new Error(`No stop found for ID ${stopId}`);
       }
 
-      const response = await fetch(
-        `${BUS_API_CONFIG.apiUrl}/getpredictions?key=${BUS_API_CONFIG.apiKey}&stpid=${singleStop.busstopId}${
-          BUS_API_CONFIG.rtpidatafeed ? `&rtpidatafeed=${BUS_API_CONFIG.rtpidatafeed}` : ''
-        }`
-      );
+      console.log('Found single stop:', singleStop);
+
+      const url = `${BUS_API_CONFIG.apiUrl}/getpredictions?key=${BUS_API_CONFIG.apiKey}
+      &format=${BUS_API_CONFIG.format}&stpid=${singleStop.busstopId}`;
+      
+      console.log('Fetching predictions from URL:', url);
+
+      const response = await fetch(url);
 
       if (!response.ok) {
+        console.error('Response not OK:', response.status, response.statusText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('Raw API response:', data);
 
       if (data.error) {
+        console.error('API returned error:', data.error);
         throw new Error(data.error.msg);
       }
 
       const predictions = data['bustime-response'].prd || [];
+      console.log('Predictions from API:', predictions);
 
-      return predictions.map((pred: BusTimePrediction): Route => ({
+      const routes = predictions.map((pred: BusTimePrediction): Route => ({
         id: pred.rt,
         description: formatPredictionDescription(pred),
         location: pred.stpnm,
         time: parseInt(pred.prdctdn),
         color: ROUTE_COLORS[pred.rt] || 'bg-gray-500'
       }));
+
+      console.log('Final processed routes:', routes);
+      return routes;
     }
   } catch (error) {
     console.error('Failed to fetch predictions:', error);
