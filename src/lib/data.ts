@@ -84,8 +84,7 @@ export async function getStopRoutes(stopId: string): Promise<Route[]> {
       // Fetch predictions for all stops in the group
       const predictionsPromises = groupedStop.stops.map(async stop => {
         try {
-          const url = `${BUS_API_CONFIG.apiUrl}/getpredictions?key=${BUS_API_CONFIG.apiKey}
-          &format=${BUS_API_CONFIG.format}&stpid=${stop.busstopId}`;
+          const url = `${BUS_API_CONFIG.apiUrl}/getpredictions?key=${BUS_API_CONFIG.apiKey}&format=${BUS_API_CONFIG.format}&stpid=${stop.busstopId}`;
           
           console.log('Fetching predictions from URL:', url);
           
@@ -99,8 +98,10 @@ export async function getStopRoutes(stopId: string): Promise<Route[]> {
           const data = await response.json();
           console.log('Raw API response for stop', stop.busstopId, ':', data);
           
-          if (data.error) {
-            console.error(`Error fetching predictions for stop ${stop.name}:`, data.error);
+          if (data['bustime-response'].error) {
+            // Add this detailed error logging:
+            const errorDetails = data['bustime-response'].error[0];
+            console.log('API Error Details for stop', stop.busstopId, ':', errorDetails);
             return [];
           }
 
@@ -174,8 +175,7 @@ export async function getStopRoutes(stopId: string): Promise<Route[]> {
 
       console.log('Found single stop:', singleStop);
 
-      const url = `${BUS_API_CONFIG.apiUrl}/getpredictions?key=${BUS_API_CONFIG.apiKey}
-      &format=${BUS_API_CONFIG.format}&stpid=${singleStop.busstopId}`;
+      const url = `${BUS_API_CONFIG.apiUrl}/getpredictions?key=${BUS_API_CONFIG.apiKey}&format=${BUS_API_CONFIG.format}&stpid=${singleStop.busstopId}`;
       
       console.log('Fetching predictions from URL:', url);
 

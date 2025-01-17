@@ -273,7 +273,7 @@ export const ROUTE_COLORS: Record<string, string> = {
   '16': 'bg-teal-700',
   '18': 'bg-blue-900',
   '19': 'bg-stone-600',
-  '20': 'bg-lime-300',
+  '20': 'bg-amber-500',
 };
 
 // Route name mappings
