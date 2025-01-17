@@ -40,15 +40,80 @@ interface BusTimePrediction {
   zone: string;
 }
 
-interface CombinedPrediction {
-  id: string;
-  description: string;
-  location: string;
-  time: number;
-  color: string;
-  stopName: string;
-  direction?: string;
+// New interfaces for optimization
+interface CacheEntry {
+  data: Route[];
+  timestamp: number;
 }
+
+interface StopGroup {
+  id: string;
+  stops: string[]; // List of busstopIds
+  name: string;
+}
+
+// Constants for optimization
+const CACHE_DURATION = 60 * 1000; // 1 minute
+const MAX_STOPS_PER_REQUEST = 10;
+
+// Batch groups definition
+const BATCH_GROUPS: StopGroup[] = [
+  // Upper Campus Group
+  {
+    id: 'upper-campus',
+    name: 'Upper Campus Stops',
+    stops: [
+      '1509', '2673', // Kresge
+      '1615', '2674', // Science Hill
+      '1616', '2675', // College Nine
+      '1617',         // Crown Merrill
+      '2672'          // Kerr Hall
+    ]
+  },
+  // Central Campus Group
+  {
+    id: 'central-campus',
+    name: 'Central Campus Stops',
+    stops: [
+      '2102', '2676', // Bookstore
+      '2101',         // East Field
+      '1501', '2677'  // East Remote
+    ]
+  },
+  // Lower Campus Group
+  {
+    id: 'lower-campus',
+    name: 'Lower Campus Stops',
+    stops: [
+      '2669', '2678', // Farm
+      '1342',         // Lower Campus
+      '1341', '2375', // Main Gate
+      '1510', '2374'  // High & Western
+    ]
+  },
+  // West Campus Group
+  {
+    id: 'west-campus',
+    name: 'West Campus Stops',
+    stops: [
+      '1385', '2328', // Arboretum
+      '1505', '2670', // Oakes
+      '2516',         // Family Housing
+      '2448', '2671'  // Rachel Carson
+    ]
+  }
+];
+
+// Create stop to group mapping
+const STOP_TO_GROUP_MAP = new Map<string, StopGroup>();
+BATCH_GROUPS.forEach(group => {
+  group.stops.forEach(stopId => {
+    STOP_TO_GROUP_MAP.set(stopId, group);
+  });
+});
+
+// Cache for storing predictions
+const predictionCache = new Map<string, CacheEntry>();
 
 // Helper function to format prediction descriptions
 function formatPredictionDescription(pred: BusTimePrediction): string {
@@ -56,15 +121,73 @@ function formatPredictionDescription(pred: BusTimePrediction): string {
   return `${routeName} - ${pred.des}`;
 }
 
-// Helper function to determine if predictions should be combined
-function shouldCombinePredictions(pred1: CombinedPrediction, pred2: CombinedPrediction): boolean {
-  const timeThreshold = 3; // minutes
-  return pred1.id === pred2.id && 
-         Math.abs(pred1.time - pred2.time) <= timeThreshold;
+async function fetchPredictionsForGroup(group: StopGroup): Promise<Route[]> {
+  try {
+    console.log(`\n📡 Fetching predictions for group: ${group.id}`);
+    
+    // Split into chunks of 10 stops if needed (API limit)
+    const stopChunks = [];
+    for (let i = 0; i < group.stops.length; i += MAX_STOPS_PER_REQUEST) {
+      stopChunks.push(group.stops.slice(i, i + MAX_STOPS_PER_REQUEST));
+    }
+    console.log(`📦 Split into ${stopChunks.length} chunks due to API limit`);
+
+    // Fetch predictions for each chunk
+    const allPredictions = await Promise.all(
+      stopChunks.map(async (chunk, index) => {
+        const stopsString = chunk.join(',');
+        const url = `${BUS_API_CONFIG.apiUrl}/getpredictions?key=${BUS_API_CONFIG.apiKey}&format=${BUS_API_CONFIG.format}&stpid=${stopsString}`;
+        
+        console.log(`🌐 Making API request ${index + 1}/${stopChunks.length} for stops: ${stopsString}`);
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const predictions = data['bustime-response'].prd || [];
+        console.log(`✅ Received ${predictions.length} predictions from API for chunk ${index + 1}`);
+        return predictions;
+      })
+    );
+
+    // Process and combine predictions
+    const routes = allPredictions
+      .flat()
+      .map((pred: BusTimePrediction): Route => ({
+        id: pred.rt,
+        description: formatPredictionDescription(pred),
+        location: pred.stpnm,
+        time: parseInt(pred.prdctdn),
+        color: ROUTE_COLORS[pred.rt] || 'bg-gray-500'
+      }))
+      .sort((a, b) => a.time - b.time);
+
+    console.log(`📊 Processed ${routes.length} total predictions for group ${group.id}`);
+
+    // Cache the results for the entire group
+    predictionCache.set(group.id, {
+      data: routes,
+      timestamp: Date.now()
+    });
+    console.log(`💾 Cached predictions for group ${group.id}`);
+
+    return routes;
+  } catch (error) {
+    console.error(`❌ Error fetching predictions for group ${group.id}:`, error);
+    // Return cached data if available
+    const cached = predictionCache.get(group.id);
+    if (cached) {
+      console.log(`⚠️ Using stale cache as fallback for group ${group.id}`);
+      return cached.data;
+    }
+    console.log(`⚠️ No cache available for fallback, returning empty array`);
+    return [];
+  }
 }
 
 export async function getStops(): Promise<Stop[]> {
-  // Return our predefined list of stops
   return DISPLAY_STOPS.map(stop => ({
     id: stop.id,
     name: stop.name
@@ -72,149 +195,61 @@ export async function getStops(): Promise<Stop[]> {
 }
 
 export async function getStopRoutes(stopId: string): Promise<Route[]> {
-  try {
-    console.log('Fetching routes for stop:', stopId);
-    
-    // Check if this is a grouped stop
-    const groupedStop = Object.values(STOP_GROUPINGS).find(group => group.id === stopId);
-    
-    if (groupedStop) {
-      console.log('Found grouped stop:', groupedStop);
-      
-      // Fetch predictions for all stops in the group
-      const predictionsPromises = groupedStop.stops.map(async stop => {
-        try {
-          const url = `${BUS_API_CONFIG.apiUrl}/getpredictions?key=${BUS_API_CONFIG.apiKey}&format=${BUS_API_CONFIG.format}&stpid=${stop.busstopId}`;
-          
-          console.log('Fetching predictions from URL:', url);
-          
-          const response = await fetch(url);
-          
-          if (!response.ok) {
-            console.error('Response not OK:', response.status, response.statusText);
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          
-          const data = await response.json();
-          console.log('Raw API response for stop', stop.busstopId, ':', data);
-          
-          if (data['bustime-response'].error) {
-            // Add this detailed error logging:
-            const errorDetails = data['bustime-response'].error[0];
-            console.log('API Error Details for stop', stop.busstopId, ':', errorDetails);
-            return [];
-          }
-
-          const predictions = (data['bustime-response'].prd || []).map((pred: BusTimePrediction): CombinedPrediction => ({
-            id: pred.rt,
-            description: formatPredictionDescription(pred),
-            location: pred.stpnm,
-            time: parseInt(pred.prdctdn),
-            color: ROUTE_COLORS[pred.rt] || 'bg-gray-500',
-            stopName: stop.name,
-            direction: pred.des
-          }));
-          
-          console.log('Processed predictions for stop', stop.busstopId, ':', predictions);
-          return predictions;
-
-        } catch (error) {
-          console.error(`Error fetching predictions for stop ${stop.busstopId}:`, error);
-          return [];
-        }
-      });
-
-      const predictions = await Promise.all(predictionsPromises);
-      const allPredictions = predictions.flat().sort((a, b) => a.time - b.time);
-      console.log('All predictions after combining:', allPredictions);
-
-      // Combine and deduplicate predictions
-      const combinedPredictions: Route[] = [];
-      const processedPredictions = new Set<string>();
-
-      allPredictions.forEach(pred => {
-        const predictionKey = `${pred.id}-${pred.time}-${pred.direction}`;
-        
-        if (processedPredictions.has(predictionKey)) {
-          return;
-        }
-
-        const existingPred = combinedPredictions.find(
-          existing => shouldCombinePredictions(existing as CombinedPrediction, pred)
-        );
-
-        if (existingPred) {
-          existingPred.time = Math.min(existingPred.time, pred.time);
-          if (!existingPred.location.includes(pred.stopName)) {
-            existingPred.location = `${existingPred.location} & ${pred.stopName}`;
-          }
-        } else {
-          combinedPredictions.push({
-            id: pred.id,
-            description: pred.description,
-            location: pred.stopName,
-            time: pred.time,
-            color: pred.color
-          });
-        }
-
-        processedPredictions.add(predictionKey);
-      });
-
-      console.log('Final combined predictions:', combinedPredictions);
-      return combinedPredictions;
-
-    } else {
-      // Handle single stop case
-      const singleStop = SINGLE_STOPS.find(stop => stop.id === stopId);
-      
-      if (!singleStop) {
-        console.error(`No stop found for ID ${stopId}`);
-        throw new Error(`No stop found for ID ${stopId}`);
-      }
-
-      console.log('Found single stop:', singleStop);
-
-      const url = `${BUS_API_CONFIG.apiUrl}/getpredictions?key=${BUS_API_CONFIG.apiKey}&format=${BUS_API_CONFIG.format}&stpid=${singleStop.busstopId}`;
-      
-      console.log('Fetching predictions from URL:', url);
-
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        console.error('Response not OK:', response.status, response.statusText);
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('Raw API response:', data);
-
-      if (data.error) {
-        console.error('API returned error:', data.error);
-        throw new Error(data.error.msg);
-      }
-
-      const predictions = data['bustime-response'].prd || [];
-      console.log('Predictions from API:', predictions);
-
-      const routes = predictions.map((pred: BusTimePrediction): Route => ({
-        id: pred.rt,
-        description: formatPredictionDescription(pred),
-        location: pred.stpnm,
-        time: parseInt(pred.prdctdn),
-        color: ROUTE_COLORS[pred.rt] || 'bg-gray-500'
-      }));
-
-      console.log('Final processed routes:', routes);
-      return routes;
+  console.log(`\n🚌 getStopRoutes called for stopId: ${stopId}`);
+  
+  // Convert from display stopId to actual busstopId
+  let busstopId: string | undefined;
+  let stopName: string | undefined;
+  
+  // Check if it's a grouped stop
+  const groupedStop = Object.values(STOP_GROUPINGS).find(group => group.id === stopId);
+  if (groupedStop) {
+    busstopId = groupedStop.stops[0].busstopId;
+    stopName = groupedStop.name;
+    console.log(`📍 Found grouped stop: ${stopName} (busstopId: ${busstopId})`);
+  } else {
+    // Check single stops
+    const singleStop = SINGLE_STOPS.find(stop => stop.id === stopId);
+    if (singleStop) {
+      busstopId = singleStop.busstopId;
+      stopName = singleStop.name;
+      console.log(`📍 Found single stop: ${stopName} (busstopId: ${busstopId})`);
     }
-  } catch (error) {
-    console.error('Failed to fetch predictions:', error);
-    return [];
   }
+
+  if (!busstopId || !stopName) {
+    console.error(`❌ No stop found for ID ${stopId}`);
+    throw new Error(`No stop found for ID ${stopId}`);
+  }
+
+  // Find which batch group this stop belongs to
+  const group = STOP_TO_GROUP_MAP.get(busstopId);
+  if (!group) {
+    console.error(`❌ No batch group found for stop ${busstopId}`);
+    throw new Error(`No batch group found for stop ${busstopId}`);
+  }
+  console.log(`🔍 Stop belongs to batch group: ${group.id}`);
+
+  // Check cache for the group
+  const cached = predictionCache.get(group.id);
+  if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
+    console.log(`📦 Using cached data for group ${group.id} (age: ${(Date.now() - cached.timestamp) / 1000}s)`);
+    // Filter cached results for requested stop
+    const filteredResults = cached.data.filter(route => route.location.includes(stopName));
+    console.log(`📊 Found ${filteredResults.length} predictions in cache for ${stopName}`);
+    return filteredResults;
+  }
+
+  console.log(`🔄 Cache miss or expired - fetching fresh data for group ${group.id}`);
+  // Fetch fresh data for the entire group
+  const groupPredictions = await fetchPredictionsForGroup(group);
+  
+  // Filter results for requested stop
+  const filteredResults = groupPredictions.filter(route => route.location.includes(stopName));
+  console.log(`📊 Found ${filteredResults.length} predictions in fresh data for ${stopName}`);
+  return filteredResults;
 }
 
-// Helper function for development/testing
 export function getStopById(stopId: string): Stop | undefined {
   const groupedStop = Object.values(STOP_GROUPINGS).find(group => group.id === stopId);
   if (groupedStop) {
