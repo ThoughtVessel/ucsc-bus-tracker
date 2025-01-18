@@ -12,7 +12,7 @@ interface StopsGridProps {
 
 export function StopsGrid({ stops }: StopsGridProps) {
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-white"> {/* Darker shade of UC Blue */}
       <div className="grid grid-cols-2 w-full gap-4 p-4">
         {stops.map((stop) => (
           <BusStopCard 

@@ -88,7 +88,8 @@ const BATCH_GROUPS: StopGroup[] = [
       '2669', '2678', // Farm
       '1342',         // Lower Campus
       '1341', '2375', // Main Gate
-      '1510', '2374'  // High & Western
+      '1510', '2374', // High & Western
+      '2739'          // High & Tosca
     ]
   },
   // West Campus Group
@@ -117,8 +118,8 @@ const predictionCache = new Map<string, CacheEntry>();
 
 // Helper function to format prediction descriptions
 function formatPredictionDescription(pred: BusTimePrediction): string {
-  const routeName = ROUTE_NAMES[pred.rt] || pred.rt;
-  return `${routeName} - ${pred.des}`;
+  // Just return the destination since the route name will be shown separately
+  return pred.des;
 }
 
 async function fetchPredictionsForGroup(group: StopGroup): Promise<Route[]> {

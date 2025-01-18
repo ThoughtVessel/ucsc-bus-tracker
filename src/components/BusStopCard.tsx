@@ -10,12 +10,14 @@ export function BusStopCard({ id, name }: BusStopCardProps) {
   return (
     <Link 
       href={`/stops/${id}`}
-      className="relative h-24 border-[0.5px] border-gray-700 overflow-hidden group"
+      className="relative h-24 border-[0.5px] border-[#FDC700]/60 overflow-hidden group
+                backdrop-blur-sm shadow-lg transition-all duration-200"
     >
-      <div className="absolute inset-0 bg-navy-800 group-hover:bg-navy-700">
+      <div className="absolute inset-0 bg-[#003C6C]/90 group-hover:bg-[#004d89]/90 
+                      transition-colors duration-200">
         <div className="absolute inset-0 opacity-20">
-          <div className="absolute transform rotate-45 w-full h-1 bg-white/20" />
-          <div className="absolute transform -rotate-45 w-full h-1 bg-white/20" />
+          <div className="absolute transform rotate-45 w-full h-1 bg-[#FDC700]" />
+          <div className="absolute transform -rotate-45 w-full h-1 bg-[#FDC700]" />
         </div>
       </div>
       <div className="relative z-10 h-full flex items-center px-4">
