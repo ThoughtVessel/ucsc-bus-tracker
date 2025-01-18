@@ -2,7 +2,7 @@
 
 export const BUS_API_CONFIG = {
   apiUrl: "http://rt.scmetro.org/bustime/api/v3",
-  apiKey: process.env.NEXT_PUBLIC_BUS_API_KEY,
+  apiKey: process.env.API_KEY,
   //rtpidatafeed: "YOUR_FEED_NAME", // Optional
   // Force JSON response format
   format: "json"
