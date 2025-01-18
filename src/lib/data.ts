@@ -7,6 +7,7 @@ import {
   ROUTE_COLORS, 
   SINGLE_STOPS 
 } from './busConfig';
+import { debug } from './debug';
 
 interface Route {
   id: string;
@@ -38,7 +39,6 @@ interface BusTimePrediction {
   zone: string;
 }
 
-// New interfaces for optimization
 interface CacheEntry {
   data: Route[];
   timestamp: number;
@@ -50,13 +50,14 @@ interface StopGroup {
   name: string;
 }
 
-// Constants for optimization
+// Constants
 const CACHE_DURATION = 60 * 1000; // 1 minute
 const MAX_STOPS_PER_REQUEST = 10;
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
 
 // Batch groups definition
 const BATCH_GROUPS: StopGroup[] = [
-  // Upper Campus Group
   {
     id: 'upper-campus',
     name: 'Upper Campus Stops',
@@ -68,7 +69,6 @@ const BATCH_GROUPS: StopGroup[] = [
       '2672'          // Kerr Hall
     ]
   },
-  // Central Campus Group
   {
     id: 'central-campus',
     name: 'Central Campus Stops',
@@ -78,7 +78,6 @@ const BATCH_GROUPS: StopGroup[] = [
       '1501', '2677'  // East Remote
     ]
   },
-  // Lower Campus Group
   {
     id: 'lower-campus',
     name: 'Lower Campus Stops',
@@ -90,7 +89,6 @@ const BATCH_GROUPS: StopGroup[] = [
       '2739'          // High & Tosca
     ]
   },
-  // West Campus Group
   {
     id: 'west-campus',
     name: 'West Campus Stops',
@@ -114,22 +112,51 @@ BATCH_GROUPS.forEach(group => {
 // Cache for storing predictions
 const predictionCache = new Map<string, CacheEntry>();
 
-// Helper function to format prediction descriptions
-function formatPredictionDescription(pred: BusTimePrediction): string {
-  // Just return the destination since the route name will be shown separately
+// Helper Functions
+const formatPredictionDescription = (pred: BusTimePrediction): string => {
   return pred.des;
-}
+};
 
+const cleanupCache = () => {
+  const now = Date.now();
+  for (const [groupId, entry] of predictionCache.entries()) {
+    if (now - entry.timestamp > CACHE_DURATION) {
+      predictionCache.delete(groupId);
+      debug.log('cache', `Invalidated cache for group ${groupId}`);
+    }
+  }
+};
+
+const fetchWithRetry = async (url: string): Promise<Response> => {
+  for (let i = 0; i < MAX_RETRIES; i++) {
+    try {
+      const response = await fetch(url);
+      if (response.ok) return response;
+      debug.error(`Request failed (attempt ${i + 1}/${MAX_RETRIES}): ${response.status}`);
+    } catch (error) {
+      if (error instanceof Error) {
+        debug.error(`Fetch attempt ${i + 1}/${MAX_RETRIES} failed:`, error);
+      } else {
+        debug.error(`Fetch attempt ${i + 1}/${MAX_RETRIES} failed:`, String(error));
+      }
+      if (i === MAX_RETRIES - 1) throw error;
+    }
+    await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (i + 1)));
+  }
+  throw new Error('Max retries reached');
+};
+
+// Main Functions
 async function fetchPredictionsForGroup(group: StopGroup): Promise<Route[]> {
   try {
-    console.log(`\n📡 Fetching predictions for group: ${group.id}`);
+    debug.log(`\n📡 Fetching predictions for group: ${group.id}`);
     
     // Split into chunks of 10 stops if needed (API limit)
     const stopChunks = [];
     for (let i = 0; i < group.stops.length; i += MAX_STOPS_PER_REQUEST) {
       stopChunks.push(group.stops.slice(i, i + MAX_STOPS_PER_REQUEST));
     }
-    console.log(`📦 Split into ${stopChunks.length} chunks due to API limit`);
+    debug.log(`📦 Split into ${stopChunks.length} chunks due to API limit`);
 
     // Fetch predictions for each chunk
     const allPredictions = await Promise.all(
@@ -137,16 +164,12 @@ async function fetchPredictionsForGroup(group: StopGroup): Promise<Route[]> {
         const stopsString = chunk.join(',');
         const url = `${BUS_API_CONFIG.apiUrl}/getpredictions?key=${BUS_API_CONFIG.apiKey}&format=${BUS_API_CONFIG.format}&stpid=${stopsString}`;
         
-        console.log(`🌐 Making API request ${index + 1}/${stopChunks.length} for stops: ${stopsString}`);
+        debug.log(`🌐 Making API request ${index + 1}/${stopChunks.length} for stops: ${stopsString}`);
         
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
+        const response = await fetchWithRetry(url);
         const data = await response.json();
         const predictions = data['bustime-response'].prd || [];
-        console.log(`✅ Received ${predictions.length} predictions from API for chunk ${index + 1}`);
+        debug.log(`✅ Received ${predictions.length} predictions from API for chunk ${index + 1}`);
         return predictions;
       })
     );
@@ -163,25 +186,30 @@ async function fetchPredictionsForGroup(group: StopGroup): Promise<Route[]> {
       }))
       .sort((a, b) => a.time - b.time);
 
-    console.log(`📊 Processed ${routes.length} total predictions for group ${group.id}`);
+    debug.log(`📊 Processed ${routes.length} total predictions for group ${group.id}`);
 
-    // Cache the results for the entire group
+    // Cache the results
     predictionCache.set(group.id, {
       data: routes,
       timestamp: Date.now()
     });
-    console.log(`💾 Cached predictions for group ${group.id}`);
+    debug.log(`💾 Cached predictions for group ${group.id}`);
 
     return routes;
   } catch (error) {
-    console.error(`❌ Error fetching predictions for group ${group.id}:`, error);
-    // Return cached data if available
+    // Type guard to ensure error is of acceptable type
+    const errorMessage = error instanceof Error 
+      ? error 
+      : new Error(String(error));
+      
+    debug.error(`Error fetching predictions for group ${group.id}:`, errorMessage);
+    
     const cached = predictionCache.get(group.id);
     if (cached) {
-      console.log(`⚠️ Using stale cache as fallback for group ${group.id}`);
+      debug.log(`⚠️ Using stale cache as fallback for group ${group.id}`);
       return cached.data;
     }
-    console.log(`⚠️ No cache available for fallback, returning empty array`);
+    debug.log(`⚠️ No cache available for fallback, returning empty array`);
     return [];
   }
 }
@@ -194,7 +222,10 @@ export async function getStops(): Promise<Stop[]> {
 }
 
 export async function getStopRoutes(stopId: string): Promise<Route[]> {
-  console.log(`\n🚌 getStopRoutes called for stopId: ${stopId}`);
+  debug.log(`\n🚌 getStopRoutes called for stopId: ${stopId}`);
+
+  // Clean up expired cache entries before proceeding
+  cleanupCache();
   
   // Convert from display stopId to actual busstopId
   let busstopId: string | undefined;
@@ -205,47 +236,46 @@ export async function getStopRoutes(stopId: string): Promise<Route[]> {
   if (groupedStop) {
     busstopId = groupedStop.stops[0].busstopId;
     stopName = groupedStop.name;
-    console.log(`📍 Found grouped stop: ${stopName} (busstopId: ${busstopId})`);
+    debug.log(`📍 Found grouped stop: ${stopName} (busstopId: ${busstopId})`);
   } else {
     // Check single stops
     const singleStop = SINGLE_STOPS.find(stop => stop.id === stopId);
     if (singleStop) {
       busstopId = singleStop.busstopId;
       stopName = singleStop.name;
-      console.log(`📍 Found single stop: ${stopName} (busstopId: ${busstopId})`);
+      debug.log(`📍 Found single stop: ${stopName} (busstopId: ${busstopId})`);
     }
   }
 
   if (!busstopId || !stopName) {
-    console.error(`❌ No stop found for ID ${stopId}`);
+    debug.error(`No stop found for ID ${stopId}`);
     throw new Error(`No stop found for ID ${stopId}`);
   }
 
   // Find which batch group this stop belongs to
   const group = STOP_TO_GROUP_MAP.get(busstopId);
   if (!group) {
-    console.error(`❌ No batch group found for stop ${busstopId}`);
+    debug.error(`No batch group found for stop ${busstopId}`);
     throw new Error(`No batch group found for stop ${busstopId}`);
   }
-  console.log(`🔍 Stop belongs to batch group: ${group.id}`);
+  debug.log(`🔍 Stop belongs to batch group: ${group.id}`);
 
   // Check cache for the group
   const cached = predictionCache.get(group.id);
   if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
-    console.log(`📦 Using cached data for group ${group.id} (age: ${(Date.now() - cached.timestamp) / 1000}s)`);
-    // Filter cached results for requested stop
+    debug.log(`📦 Using cached data for group ${group.id} (age: ${(Date.now() - cached.timestamp) / 1000}s)`);
     const filteredResults = cached.data.filter(route => route.location.includes(stopName));
-    console.log(`📊 Found ${filteredResults.length} predictions in cache for ${stopName}`);
+    debug.log(`📊 Found ${filteredResults.length} predictions in cache for ${stopName}`);
     return filteredResults;
   }
 
-  console.log(`🔄 Cache miss or expired - fetching fresh data for group ${group.id}`);
+  debug.log(`🔄 Cache miss or expired - fetching fresh data for group ${group.id}`);
   // Fetch fresh data for the entire group
   const groupPredictions = await fetchPredictionsForGroup(group);
   
   // Filter results for requested stop
   const filteredResults = groupPredictions.filter(route => route.location.includes(stopName));
-  console.log(`📊 Found ${filteredResults.length} predictions in fresh data for ${stopName}`);
+  debug.log(`📊 Found ${filteredResults.length} predictions in fresh data for ${stopName}`);
   return filteredResults;
 }
 
