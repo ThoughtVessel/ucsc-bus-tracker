@@ -2,11 +2,9 @@
 
 import { 
   BUS_API_CONFIG, 
-  STOP_MAPPINGS,
   STOP_GROUPINGS, 
   DISPLAY_STOPS,
   ROUTE_COLORS, 
-  ROUTE_NAMES,
   SINGLE_STOPS 
 } from './busConfig';
 

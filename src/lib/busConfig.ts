@@ -1,11 +1,5 @@
 // src/lib/busConfig.ts
 
-interface BusApiConfig {
-  apiUrl: string;
-  apiKey: string;
-  format: string;
-}
-
 export const BUS_API_CONFIG = {
   apiUrl: "http://rt.scmetro.org/bustime/api/v3",
   apiKey: "myjzDyRfTEFfXqidcMfBBjxRc",
