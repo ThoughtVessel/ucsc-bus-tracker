@@ -247,18 +247,30 @@ export const STOP_GROUPINGS = {
 // Stops that aren't grouped (single direction or standalone stops)
 export const SINGLE_STOPS = [
   STOP_MAPPINGS['crown-merrill'],
+  STOP_MAPPINGS['kerr-hall'],
   STOP_MAPPINGS['east-field'],
   STOP_MAPPINGS['lower-campus-1'],
   STOP_MAPPINGS['high-tosca'],
-  STOP_MAPPINGS['family-housing'],
-  STOP_MAPPINGS['kerr-hall']
+  STOP_MAPPINGS['family-housing']
 ];
 
 // Combined list of grouped and single stops for display
 export const DISPLAY_STOPS = [
-  ...Object.values(STOP_GROUPINGS),
-  ...SINGLE_STOPS
-].sort((a, b) => a.name.localeCompare(b.name));
+  STOP_GROUPINGS['science-hill'],
+  STOP_GROUPINGS['bookstore'],
+  STOP_GROUPINGS['college-nine'],
+  STOP_GROUPINGS['kresge'],
+  SINGLE_STOPS[0], // crown-merrill
+  STOP_GROUPINGS['rachel-carson'],
+  STOP_GROUPINGS['east-remote'],
+  STOP_GROUPINGS['oakes'],
+  SINGLE_STOPS[1], // kerr-hall
+  STOP_GROUPINGS['farm'],
+  STOP_GROUPINGS['main-gate'],
+  STOP_GROUPINGS['high-western'],
+  STOP_GROUPINGS['arboretum'],
+  ...SINGLE_STOPS.slice(2) // remaining single stops
+];
 
 
 // Route color mappings
