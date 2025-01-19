@@ -86,7 +86,9 @@ const BATCH_GROUPS: StopGroup[] = [
       '1342',         // Lower Campus
       '1341', '2375', // Main Gate
       '1510', '2374', // High & Western
-      '2739'          // High & Tosca
+      '2739',         // High & Tosca
+      '1230'          // Bay Dr & Iowa Dr
+
     ]
   },
   {

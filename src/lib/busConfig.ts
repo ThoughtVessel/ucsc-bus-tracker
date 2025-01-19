@@ -149,7 +149,12 @@ export const STOP_MAPPINGS = {
     id: '2672',
     busstopId: '2672',
     name: 'Kerr Hall'
-  }
+  },
+  'bay-drive-iowa-street': {
+    id: '1230',
+    busstopId: '1230',
+    name: 'Bay Dr & Iowa Dr'
+  },
 } as const;
 
 // Define stop groupings for stops that should be combined
@@ -251,7 +256,8 @@ export const SINGLE_STOPS = [
   STOP_MAPPINGS['east-field'],
   STOP_MAPPINGS['lower-campus-1'],
   STOP_MAPPINGS['high-tosca'],
-  STOP_MAPPINGS['family-housing']
+  STOP_MAPPINGS['family-housing'],
+  STOP_MAPPINGS['bay-drive-iowa-street']
 ];
 
 // Combined list of grouped and single stops for display
