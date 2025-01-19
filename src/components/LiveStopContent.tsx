@@ -1,6 +1,6 @@
 'use client';
 // src/components/LiveStopContent.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { RouteBox } from '@/components/RouteBox';
 import type { Route } from '@/lib/types';
@@ -24,8 +24,9 @@ export function LiveStopContent({ initialStop }: LiveStopContentProps) {
   const [groupedRoutes, setGroupedRoutes] = useState<Record<string, GroupedRoute>>({});
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  //const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
-  const fetchStopData = async () => {
+  const fetchStopData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/stops/${initialStop.id}`);
@@ -50,21 +51,20 @@ export function LiveStopContent({ initialStop }: LiveStopContentProps) {
       
       setGroupedRoutes(grouped);
       setError(null);
+      //setLastUpdate(new Date());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
-  };
+  }, [initialStop.id]);
 
   useEffect(() => {
     fetchStopData();
-    // Set up interval for periodic updates
-    const interval = setInterval(fetchStopData, 60000); // Update every minute
+    const interval = setInterval(fetchStopData, 15000); // Update every 15 seconds
     
-    // Cleanup interval on unmount
     return () => clearInterval(interval);
-  }, [initialStop.id]);
+  }, [fetchStopData]); // Now fetchStopData is properly included in dependencies
 
   if (error) {
     return (
@@ -87,9 +87,11 @@ export function LiveStopContent({ initialStop }: LiveStopContentProps) {
   return (
     <>
       <div className="w-full bg-gray-100 sticky top-0 z-20 shadow-sm">
-        <h1 className="text-2xl font-bold text-center py-4 text-gray-900">
-          {initialStop.name}
-        </h1>
+        <div className="px-4">
+          <h1 className="text-2xl font-bold text-center py-4 text-gray-900">
+            {initialStop.name}
+          </h1>
+        </div>
       </div>
       <div className="flex flex-col w-full pb-24">
         {loading && Object.keys(groupedRoutes).length === 0 && (

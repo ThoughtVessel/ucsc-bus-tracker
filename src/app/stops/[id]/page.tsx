@@ -3,14 +3,14 @@ import { Suspense } from 'react';
 import { LiveStopContent } from '@/components/LiveStopContent';
 import { getStopById } from '@/lib/data';
 
-interface StopPageProps {
+interface PageProps {
   params: Promise<{ id: string }>;
-  searchParams?: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function StopPage(props: StopPageProps) {
+export default async function StopPage({ params }: PageProps) {
   // Await the params promise to get the id
-  const { id } = await props.params;
+  const { id } = await params;
   
   const stop = getStopById(id);
   
