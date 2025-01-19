@@ -85,6 +85,11 @@ export const STOP_MAPPINGS = {
     busstopId: '1342',
     name: 'Lower Campus'
   },
+  'lower-campus-2': {
+    id: '2679',
+    busstopId: '2679',
+    name: 'Lower Campus'
+  },
   'main-gate-1': {
     id: '1341',
     busstopId: '1341',
@@ -246,6 +251,14 @@ export const STOP_GROUPINGS = {
       STOP_MAPPINGS['rachel-carson-1'],
       STOP_MAPPINGS['rachel-carson-2']
     ]
+  },
+  'lower-campus': {
+    id: 'lower-campus',
+    name: 'Lower Campus',
+    stops: [
+      STOP_MAPPINGS['lower-campus-1'],
+      STOP_MAPPINGS['lower-campus-2']
+    ]
   }
 } as const;
 
@@ -254,28 +267,31 @@ export const SINGLE_STOPS = [
   STOP_MAPPINGS['crown-merrill'],
   STOP_MAPPINGS['kerr-hall'],
   STOP_MAPPINGS['east-field'],
-  STOP_MAPPINGS['lower-campus-1'],
-  STOP_MAPPINGS['high-tosca'],
   STOP_MAPPINGS['family-housing'],
+  STOP_MAPPINGS['high-tosca'],
   STOP_MAPPINGS['bay-drive-iowa-street']
 ];
 
 // Combined list of grouped and single stops for display
 export const DISPLAY_STOPS = [
-  STOP_GROUPINGS['science-hill'],
-  STOP_GROUPINGS['bookstore'],
-  STOP_GROUPINGS['college-nine'],
-  STOP_GROUPINGS['kresge'],
-  SINGLE_STOPS[0], // crown-merrill
-  STOP_GROUPINGS['rachel-carson'],
-  STOP_GROUPINGS['east-remote'],
-  STOP_GROUPINGS['oakes'],
-  SINGLE_STOPS[1], // kerr-hall
-  STOP_GROUPINGS['farm'],
-  STOP_GROUPINGS['main-gate'],
-  STOP_GROUPINGS['high-western'],
-  STOP_GROUPINGS['arboretum'],
-  ...SINGLE_STOPS.slice(2) // remaining single stops
+  STOP_GROUPINGS['science-hill'],         //Left
+  STOP_GROUPINGS['college-nine'],         //Right
+  STOP_GROUPINGS['kresge'],               //Left
+  SINGLE_STOPS[0],                        //Right
+  SINGLE_STOPS[1],                        //Left
+  STOP_GROUPINGS['bookstore'],            //Right
+  STOP_GROUPINGS['rachel-carson'],        //Left
+  SINGLE_STOPS[2],                        //Right
+  STOP_GROUPINGS['oakes'],                //Left
+  STOP_GROUPINGS['east-remote'],          //Right
+  SINGLE_STOPS[3],                        //Left
+  STOP_GROUPINGS['farm'],                 //Right
+  STOP_GROUPINGS['arboretum'],            //Left
+  STOP_GROUPINGS['lower-campus'],         //Right
+  SINGLE_STOPS[4],                        //Left
+  STOP_GROUPINGS['main-gate'],            //Right
+  STOP_GROUPINGS['high-western'],         //Left
+  SINGLE_STOPS[5],                        //Right
 ];
 
 
