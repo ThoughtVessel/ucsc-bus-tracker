@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.ico',
     // optional
-    apple: '/apple_180.png',
+    apple: '/apple-touch-icon.png',
   },
 }
 
