@@ -11,9 +11,14 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Transit App',
+  title: 'UCSC Bus Tracker',
   description: 'Real-time bus and transit information',
-};
+  icons: {
+    icon: '/favicon.ico',
+    // optional
+    //apple: '/apple-touch-icon.png',
+  },
+}
 
 export const viewport: Viewport = {
   width: 'device-width',
