@@ -181,7 +181,7 @@ async function fetchPredictionsForGroup(group: StopGroup): Promise<Route[]> {
         id: pred.rt,
         description: formatPredictionDescription(pred),
         location: pred.stpnm,
-        time: parseInt(pred.prdctdn),
+        time: pred.prdctdn === 'DUE' ? 0 : parseInt(pred.prdctdn),
         color: ROUTE_COLORS[pred.rt] || 'bg-gray-500'
       }))
       .sort((a, b) => a.time - b.time);
