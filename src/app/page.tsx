@@ -10,6 +10,13 @@ export default async function HomePage() {
   
   return (
     <main>
+      <div className="w-full bg-white top-0 z-20 shadow-sm">
+        <div className="px-4">
+          <h1 className="text-2xl font-bold text-center py-4 text-gray-900">
+            UCSC Bus Tracker
+          </h1>
+        </div>
+      </div>
       <StopsGrid stops={stops} />
       <div className="mt-12 border-t border-gray-200">
         <div className="mx-auto max-w-2xl py-8 text-center">
