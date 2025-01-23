@@ -282,9 +282,9 @@ export const DISPLAY_STOPS = [
   STOP_GROUPINGS['bookstore'],            //Right
   STOP_GROUPINGS['rachel-carson'],        //Left
   SINGLE_STOPS[2],                        //Right
-  STOP_GROUPINGS['oakes'],                //Left
-  STOP_GROUPINGS['east-remote'],          //Right
   SINGLE_STOPS[3],                        //Left
+  STOP_GROUPINGS['east-remote'],          //Right
+  STOP_GROUPINGS['oakes'],                //Left
   STOP_GROUPINGS['farm'],                 //Right
   STOP_GROUPINGS['arboretum'],            //Left
   STOP_GROUPINGS['lower-campus'],         //Right
