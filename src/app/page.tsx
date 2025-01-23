@@ -2,8 +2,8 @@
 import { StopsGrid } from '@/components/StopsGrid';
 import { getStops } from '@/lib/data';
 import Link from 'next/link';
-import { FaGithub } from 'react-icons/fa';
-import { FaLinkedin } from 'react-icons/fa';
+//import { FaGithub } from 'react-icons/fa';
+//import { FaLinkedin } from 'react-icons/fa';
 //import { FileSpreadsheet } from 'lucide-react';
 import { MessageSquare } from 'lucide-react';
 
@@ -25,7 +25,7 @@ export default async function HomePage() {
           <p className="mt-2 text-gray-600">
             Developed by <span className="font-medium">Andrew Robinson</span>
           </p>
-          
+          {/*
           <div className="mt-4 flex justify-center gap-4">
             <Link 
               href="https://github.com/thoughtvessel" 
@@ -43,6 +43,7 @@ export default async function HomePage() {
               <FaLinkedin className="h-5 w-5" />
             </Link>
           </div>
+          */}
           {/*
           <Link 
             href="https://github.com/ThoughtVessel/ucsc-bus-tracker" 
