@@ -4,6 +4,8 @@ import { getStops } from '@/lib/data';
 import Link from 'next/link';
 import { FaGithub } from 'react-icons/fa';
 import { FaLinkedin } from 'react-icons/fa';
+//import { FileSpreadsheet } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 
 export default async function HomePage() {
   const stops = await getStops();
@@ -19,7 +21,7 @@ export default async function HomePage() {
       </div>
       <StopsGrid stops={stops} />
       <div className="mt-12 border-t border-gray-200">
-        <div className="mx-auto max-w-2xl py-8 text-center">
+        <div className="mx-auto max-w-2xl py-4 text-center">
           <p className="mt-2 text-gray-600">
             Developed by <span className="font-medium">Andrew Robinson</span>
           </p>
@@ -41,13 +43,22 @@ export default async function HomePage() {
               <FaLinkedin className="h-5 w-5" />
             </Link>
           </div>
-          
+          {/*
           <Link 
             href="https://github.com/ThoughtVessel/ucsc-bus-tracker" 
             className="mt-6 inline-flex items-center gap-2 rounded-lg bg-gray-900 px-6 py-2 text-sm text-white transition-colors hover:bg-gray-700"
           >
             <FaGithub className="h-4 w-4" />
             View Project Source
+          </Link>
+          */}
+
+          <Link 
+            href="https://docs.google.com/forms/d/e/1FAIpQLSc7N91OV_D9zlDQSm8xPMmUvIJzYk9ll3DEkvMLSaJBXyvVvw/viewform?usp=dialog" 
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gray-900 px-6 py-2 text-sm text-white transition-colors hover:bg-gray-700"
+          >
+            <MessageSquare className="h-4 w-4" />
+            Share Feedback
           </Link>
         </div>
       </div>
