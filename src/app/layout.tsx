@@ -3,7 +3,6 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from "@vercel/analytics/react"
-import RedirectHandler from '@/components/RedirectHandler';
 import './globals.css';
 
 const inter = Inter({
@@ -34,7 +33,6 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.className}>
       <body className="min-h-screen bg-background">
-        <RedirectHandler />
         {children}
         <SpeedInsights />
         <Analytics />
