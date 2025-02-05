@@ -18,7 +18,7 @@ export function RouteBox({ id, description, times, color }: RouteBoxProps) {
         <span className="text-white text-3xl sm:text-5xl font-bold">{id}</span>
         <span className="sm:block text-white text-base sm:text-2xl">{description}</span>
       </div>
-      <div className="flex flex-col items-center justify-center min-w-[10rem] sm:min-w-[20rem]">
+      <div className="flex flex-col items-center justify-center min-w-[10rem] sm:min-w-[16rem]">
         <div className="text-white text-3xl sm:text-5xl font-medium">
           {formattedTimes.join(', ')}
         </div>
