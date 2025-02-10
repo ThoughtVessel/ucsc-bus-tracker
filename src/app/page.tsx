@@ -22,9 +22,11 @@ export default async function HomePage() {
       <StopsGrid stops={stops} />
       <div className="mt-12 border-t border-gray-200">
         <div className="mx-auto max-w-2xl py-4 text-center">
+          {/*
           <p className="mt-2 text-gray-600">
             Developed by <span className="font-medium">Andrew Robinson</span>
           </p>
+          */}
           {/*
           <div className="mt-4 flex justify-center gap-4">
             <Link 
