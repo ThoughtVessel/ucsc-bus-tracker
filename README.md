@@ -2,6 +2,10 @@
 
 A real-time bus tracking application for the University of California, Santa Cruz (UCSC) campus shuttle system. This web application provides students, faculty, and visitors with up-to-date information about bus arrivals and departures across the UCSC campus.
 
+## Live Demo
+
+You can see a live version of the UCSC Bus Tracker at: https://gigatransit.com/
+
 ## Features
 
 - Real-time bus arrival predictions for all major UCSC bus stops
