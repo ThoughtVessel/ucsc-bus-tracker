@@ -4,6 +4,7 @@ import { getStops } from '@/lib/data';
 import Link from 'next/link';
 import { FaGithub } from 'react-icons/fa';
 import { FaLinkedin } from 'react-icons/fa';
+import { FaUserTie } from 'react-icons/fa';
 //import { FileSpreadsheet } from 'lucide-react';
 import { MessageSquare } from 'lucide-react';
 
@@ -36,7 +37,15 @@ export default async function HomePage() {
             >
               <FaGithub className="h-5 w-5" />
             </Link>
-            
+
+            <Link
+              href="https://andrewrobinson.framer.website/"
+              className="rounded-full bg-gray-100 p-3 text-gray-600 transition-colors hover:bg-gray-200 hover:text-gray-900"
+              aria-label="Personal Website"
+            >
+              <FaUserTie className="h-5 w-5" />
+            </Link>
+
             <Link 
               href="https://www.linkedin.com/in/andrew-robinson314/" 
               className="rounded-full bg-[#0A66C2] p-3 text-white transition-colors hover:bg-[#004182]"
